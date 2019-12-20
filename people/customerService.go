@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 	"text/tabwriter"
-	"van-der-binckes/people/structs"
+	people "van-der-binckes/people/structs"
 )
 
 // Retrieves the customercollection and passes them to a custom print function
@@ -19,9 +19,41 @@ func AddCustomer(db *sql.DB) {
 
 }
 
+func GetCustomerById(db *sql.DB, customerId int) people.Customer {
+	query := "SELECT * FROM Customer WHERE customerId = ?;"
+	result, err := db.Query(query, customerId)
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		name              string
+		surname           string
+		postalCode        string
+		houseNumber       int
+		houseNumberSuffix sql.NullString
+		customer          people.Customer
+	)
+
+	if result.Next() {
+		err := result.Scan(&customerId, &name, &surname, &postalCode, &houseNumber, &houseNumberSuffix)
+		if err != nil {
+			panic(err)
+		}
+
+		customer.SetCustomerId(customerId)
+		customer.SetName(name)
+		customer.SetSurname(surname)
+		customer.SetPostalCode(postalCode)
+		customer.SetHouseNumber(houseNumber)
+		customer.SetHouseNumberSuffix(houseNumberSuffix)
+	}
+	result.Close()
+	return customer
+}
 
 //Retrieves a slice of Customer objects from the database.
-func getCustomerCollection(db *sql.DB) []structs.Customer {
+func getCustomerCollection(db *sql.DB) []people.Customer {
 	query := "SELECT * FROM Customer;"
 	result, err := db.Query(query)
 	if err != nil {
@@ -37,10 +69,10 @@ func getCustomerCollection(db *sql.DB) []structs.Customer {
 		houseNumberSuffix sql.NullString
 	)
 
-	customerCollection := make([]structs.Customer, 0)
+	customerCollection := make([]people.Customer, 0)
 
 	for result.Next() {
-		var customer structs.Customer
+		var customer people.Customer
 		err := result.Scan(&customerId, &name, &surname, &postalCode, &houseNumber, &houseNumberSuffix)
 		if err != nil {
 			panic(err)
@@ -60,7 +92,7 @@ func getCustomerCollection(db *sql.DB) []structs.Customer {
 }
 
 // uses the golang tabwriter to display all customers in a table.
-func printCustomerCollection(customers []structs.Customer) {
+func printCustomerCollection(customers []people.Customer) {
 	writer := new(tabwriter.Writer)
 	writer.Init(os.Stdout, 10, 10, 2, ' ', tabwriter.Debug) //Debug flag for lines
 

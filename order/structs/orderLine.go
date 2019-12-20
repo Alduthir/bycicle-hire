@@ -2,41 +2,50 @@ package structs
 
 import (
 	"time"
-	structs2 "van-der-binckes/items/structs"
-	"van-der-binckes/people/structs"
+	itemStructs "van-der-binckes/items/structs"
+	peopleStructs "van-der-binckes/people/structs"
 )
 
 type OrderLine struct {
-	bycicle                  structs2.Bycicle
-	customer                 structs.Customer
-	employee                 structs.Employee
+	orderLineId              int
+	bycicle                  itemStructs.Bycicle
+	customer                 peopleStructs.Customer
+	employee                 peopleStructs.Employee
 	startDate                time.Time
 	days                     int
 	totalPrice               float64
-	orderAccessoryCollection []structs2.OrderAccessory
+	orderAccessoryCollection []OrderAccessory
 }
 
-func (o *OrderLine) Bycicle() structs2.Bycicle {
+func (o *OrderLine) OrderLineId() int {
+	return o.orderLineId
+}
+
+func (o *OrderLine) SetOrderLineId(orderLineId int) {
+	o.orderLineId = orderLineId
+}
+
+func (o *OrderLine) Bycicle() itemStructs.Bycicle {
 	return o.bycicle
 }
 
-func (o *OrderLine) SetBycicle(bycicle structs2.Bycicle) {
+func (o *OrderLine) SetBycicle(bycicle itemStructs.Bycicle) {
 	o.bycicle = bycicle
 }
 
-func (o *OrderLine) Customer() structs.Customer {
+func (o *OrderLine) Customer() peopleStructs.Customer {
 	return o.customer
 }
 
-func (o *OrderLine) SetCustomer(customer structs.Customer) {
+func (o *OrderLine) SetCustomer(customer peopleStructs.Customer) {
 	o.customer = customer
 }
 
-func (o *OrderLine) Employee() structs.Employee {
+func (o *OrderLine) Employee() peopleStructs.Employee {
 	return o.employee
 }
 
-func (o *OrderLine) SetEmployee(employee structs.Employee) {
+func (o *OrderLine) SetEmployee(employee peopleStructs.Employee) {
 	o.employee = employee
 }
 
@@ -64,10 +73,10 @@ func (o *OrderLine) SetTotalPrice(totalPrice float64) {
 	o.totalPrice = totalPrice
 }
 
-func (o *OrderLine) OrderAccessoryCollection() []structs2.OrderAccessory {
+func (o *OrderLine) OrderAccessoryCollection() []OrderAccessory {
 	return o.orderAccessoryCollection
 }
 
-func (o *OrderLine) SetOrderAccessoryCollection(orderAccessoryCollection []structs2.OrderAccessory) {
+func (o *OrderLine) SetOrderAccessoryCollection(orderAccessoryCollection []OrderAccessory) {
 	o.orderAccessoryCollection = orderAccessoryCollection
 }

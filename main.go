@@ -7,7 +7,7 @@ import (
 	"van-der-binckes/connection"
 	"van-der-binckes/order"
 	"van-der-binckes/people"
-	"van-der-binckes/people/structs"
+	peopleStructs "van-der-binckes/people/structs"
 )
 
 /*
@@ -24,7 +24,7 @@ func main() {
 }
 
 // The main menu/control loop of the application. Requests an action and will continue to be called until exit.
-func requestAction(user structs.Employee, db *sql.DB) {
+func requestAction(user peopleStructs.Employee, db *sql.DB) {
 	fmt.Println("Wat wilt u doen?")
 	fmt.Println("(1) Klanten inzien")
 	fmt.Println("(2) Verhuren inzien")
@@ -45,7 +45,7 @@ func requestAction(user structs.Employee, db *sql.DB) {
 	case 4:
 		order.AddOrder(user, db)
 	case 5:
-		os.Exit(1)
+		os.Exit(0)
 	default:
 		fmt.Println("Uw invoer werd niet herkend. " +
 			"Voer alstublieft het getal in van de actie die u wilt uitvoeren.")

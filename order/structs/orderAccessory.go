@@ -1,12 +1,12 @@
 package structs
 
 import (
-	"van-der-binckes/items/structs"
+	itemStructs "van-der-binckes/items/structs"
 )
 
 type OrderAccessory struct {
 	order     OrderLine
-	accessory structs.Accessory
+	accessory itemStructs.Accessory
 	amount    int
 }
 
@@ -18,11 +18,11 @@ func (o *OrderAccessory) SetOrder(order OrderLine) {
 	o.order = order
 }
 
-func (o *OrderAccessory) Accessory() structs.Accessory {
+func (o *OrderAccessory) Accessory() itemStructs.Accessory {
 	return o.accessory
 }
 
-func (o *OrderAccessory) SetAccessory(accessory structs.Accessory) {
+func (o *OrderAccessory) SetAccessory(accessory itemStructs.Accessory) {
 	o.accessory = accessory
 }
 

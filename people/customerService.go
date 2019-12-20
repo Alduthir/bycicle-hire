@@ -1,10 +1,13 @@
 package people
 
 import (
+	"bufio"
 	"database/sql"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 	people "van-der-binckes/people/structs"
 )
@@ -15,8 +18,79 @@ func ShowCustomerCollection(db *sql.DB) {
 	printCustomerCollection(customerCollection)
 }
 
+// Creates a new customer and inserts it into the database.
 func AddCustomer(db *sql.DB) {
+	// Use the bufio reader to read multiple words at once.
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("Hoe heet deze nieuwe klant? Voor & Achternaam invullen.")
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimSuffix(text, "\n")
 
+	nameCollection := strings.Split(text, " ")
+	if len(nameCollection) != 2 {
+		fmt.Println("Uw invoer werdt niet herkend. Voer de naam en achternaam in, gescheiden door één spatie.")
+		return
+	}
+
+	fmt.Println("Wat is de postcode van de nieuwe klant?")
+	text, _ = reader.ReadString('\n')
+	text = strings.TrimSuffix(text, "\n")
+
+	regex := regexp.MustCompile(`^\W$`) // Remove whitespace
+	postalCode := regex.ReplaceAllString(text, "")
+
+	// Matches the input on 4 digits followed by 2 letters.
+	matches, _ := regexp.MatchString(`^\d{4}[a-zA-Z]{2}$`, postalCode)
+
+	if matches == false {
+		fmt.Println("Een postcode moet bestaan uit 4 cijfers en 2 letters")
+		return
+	}
+
+	fmt.Println("En tot slot, wat is het huisnummer van de nieuwe klant?")
+	text, _ = reader.ReadString('\n')
+	text = strings.TrimSuffix(text, "\n")
+
+	regex = regexp.MustCompile(`[^0-9.]`)
+	houseNumber, _ := strconv.Atoi(regex.ReplaceAllString(text, "")) //Remove all non numeric characters
+	regex = regexp.MustCompile(`[^a-zA-Z]`)                          // Remove all numeric characters
+	houseNumberSuffix := sql.NullString{String: regex.ReplaceAllString(text, "")}
+	houseNumberSuffix.Valid = false
+
+	if len(houseNumberSuffix.String) > 0 {
+		houseNumberSuffix.Valid = true
+	}
+
+	query := "INSERT INTO Customer (name, surname, postalcode, housenumber, houseNumberSuffix) values (?,?,UPPER(?),?,?)"
+
+	_, err := db.Query(
+		query,
+		strings.Title(nameCollection[0]),
+		strings.Title(nameCollection[1]),
+		postalCode,
+		houseNumber,
+		houseNumberSuffix)
+
+	if err != nil {
+		panic(err)
+	}
+
+	query = "SELECT customerId FROM Customer WHERE surname = ? AND postalCode = UPPER(?) AND houseNumber = ?"
+	result, err := db.Query(query, strings.Title(nameCollection[1]), postalCode, houseNumber)
+	if err != nil {
+		panic(err)
+	}
+
+	var customerId int
+
+	if result.Next() {
+		err := result.Scan(&customerId)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	fmt.Println("Gebruiker sucessvol toegevoegd met klantnummer " + strconv.Itoa(customerId))
 }
 
 func GetCustomerById(db *sql.DB, customerId int) people.Customer {

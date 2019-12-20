@@ -70,6 +70,7 @@ func printOrderCollection(orderLines []orderStruct.OrderLine) {
 	fmt.Fprintln(writer, "ordernummer\tklant\tmedewerker\tfiets\taccessoires\tstartdatum\teindDatum\tprijs")
 
 	for _, orderLine := range orderLines {
+		// Explicitly retrieve all objects before using their getters because go is stupid and can't read pointers.
 		customer := orderLine.Customer()
 		customerName := customer.Name() + " " + customer.Surname()
 

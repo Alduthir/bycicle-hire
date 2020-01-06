@@ -10,7 +10,7 @@ import (
 	"van-der-binckes/items"
 	orderStruct "van-der-binckes/order/structs"
 	"van-der-binckes/people"
-	peoplseStruct "van-der-binckes/people/structs"
+	peopleStruct "van-der-binckes/people/structs"
 )
 
 func ShowOrderCollection(db *sql.DB) {
@@ -18,7 +18,45 @@ func ShowOrderCollection(db *sql.DB) {
 	printOrderCollection(orderCollection)
 }
 
-func AddOrder(employee peoplseStruct.Employee, db *sql.DB) {
+func AddOrder(employee peopleStruct.Employee, db *sql.DB) {
+	customer := people.AddCustomerToOrder(db)
+	bicycle := items.AddBicycleToOrder(db)
+	//accessoryCollection := make([]itemStruct.Accessory, 0)
+	//accessoryCollection = items.addAccessoryToOrder(db, accessoryCollection)
+
+	fmt.Println("Voor hoeveel dagen wil de klant deze bestelling afnemen?")
+
+	var days int
+	fmt.Scanf("%d", &days)
+
+	totalPrice := bicycle.Price() * float64(days)
+
+
+	fmt.Println(fmt.Sprintf("De totaalprijs is €%.2f. Is dit akkoord? (ja/nee)", totalPrice))
+
+	var response string
+	fmt.Scanf("%s", &response)
+
+	if response == "ja" {
+		query := "INSERT INTO OrderLine (bicycleId, customerId, employeeId, startDate, days, totalPrice) values (?, ?, ?, NOW(), ?, ?)"
+
+		_, err := db.Query(
+			query,
+			bicycle.BicycleId(),
+			customer.CustomerId(),
+			employee.EmployeeId(),
+			days,
+			totalPrice)
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Order succesvol toegevoegd.")
+		return
+	}
+
+	fmt.Println("Order geannuleerd.")
 
 }
 
@@ -31,7 +69,7 @@ func getOrderCollection(db *sql.DB) []orderStruct.OrderLine {
 
 	var (
 		orderLineId int
-		bycicleId   int
+		bicycle     int
 		customerId  int
 		employeeId  int
 		startDate   time.Time
@@ -43,7 +81,7 @@ func getOrderCollection(db *sql.DB) []orderStruct.OrderLine {
 
 	for result.Next() {
 		var order orderStruct.OrderLine
-		err := result.Scan(&orderLineId, &bycicleId, &customerId, &employeeId, &startDate, &days, &totalPrice)
+		err := result.Scan(&orderLineId, &bicycle, &customerId, &employeeId, &startDate, &days, &totalPrice)
 		if err != nil {
 			panic(err)
 		}
@@ -52,7 +90,7 @@ func getOrderCollection(db *sql.DB) []orderStruct.OrderLine {
 		order.SetStartDate(startDate)
 		order.SetDays(days)
 		order.SetTotalPrice(totalPrice)
-		order.SetBycicle(items.GetBycicleById(db, bycicleId))
+		order.SetBicycle(items.GetBicycleById(db, bicycle))
 		order.SetCustomer(people.GetCustomerById(db, customerId))
 		order.SetEmployee(people.GetEmployeeById(db, employeeId))
 		order.SetOrderAccessoryCollection(getOrderAccessoryCollection(db, order))
@@ -91,16 +129,17 @@ func printOrderCollection(orderLines []orderStruct.OrderLine) {
 			}
 		}
 
-		bycicle := orderLine.Bycicle()
+		bicycle := orderLine.Bicycle()
 
 		output := fmt.Sprintf(
-			"%d\t%s\t%s\t%s\t%s\t%s\t%.2f",
+			"%d\t%s\t%s\t%s\t%s\t%s\t%s\t%.2f",
 			orderLine.OrderLineId(),
 			customerName,
 			employeeName,
-			bycicle.BycicleType(),
+			bicycle.BicycleType(),
 			accessories,
-			endDate.String(),
+			startDate.Format("2006-01-02"),
+			endDate.Format("2006-01-02"),
 			orderLine.TotalPrice())
 
 		fmt.Fprintln(writer, output)

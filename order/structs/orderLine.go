@@ -8,7 +8,7 @@ import (
 
 type OrderLine struct {
 	orderLineId              int
-	bycicle                  itemStructs.Bycicle
+	bicycle                  itemStructs.Bicycle
 	customer                 peopleStructs.Customer
 	employee                 peopleStructs.Employee
 	startDate                time.Time
@@ -25,12 +25,12 @@ func (o *OrderLine) SetOrderLineId(orderLineId int) {
 	o.orderLineId = orderLineId
 }
 
-func (o *OrderLine) Bycicle() itemStructs.Bycicle {
-	return o.bycicle
+func (o *OrderLine) Bicycle() itemStructs.Bicycle {
+	return o.bicycle
 }
 
-func (o *OrderLine) SetBycicle(bycicle itemStructs.Bycicle) {
-	o.bycicle = bycicle
+func (o *OrderLine) SetBicycle(bicycle itemStructs.Bicycle) {
+	o.bicycle = bicycle
 }
 
 func (o *OrderLine) Customer() peopleStructs.Customer {

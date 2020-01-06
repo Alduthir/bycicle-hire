@@ -18,6 +18,24 @@ func ShowCustomerCollection(db *sql.DB) {
 	printCustomerCollection(customerCollection)
 }
 
+func AddCustomerToOrder(db *sql.DB) (customer people.Customer){
+	fmt.Println("Voor welke klant wilt u een bestelling toevoegen? (klantnummer)")
+
+	var customerId int
+	fmt.Scanf("%d", &customerId)
+
+	defer func(db *sql.DB, customerId int){
+		r := recover()
+		if r != nil {
+			fmt.Println(fmt.Printf("Geen persoon met klantnummer %d gevonden.", customerId))
+			customer = AddCustomerToOrder(db)
+		}
+	}(db, customerId)
+
+	customer = GetCustomerById(db, customerId)
+	return customer
+}
+
 // Creates a new customer and inserts it into the database.
 func AddCustomer(db *sql.DB) {
 	// Use the bufio reader to read multiple words at once.

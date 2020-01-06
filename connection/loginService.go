@@ -34,7 +34,6 @@ func enterPassword() time.Time {
 	date, err := time.Parse("2006-01-02", password)
 	if err != nil {
 		fmt.Println("Het door u ingevoerde wachtwoord in ongeldig, probeer het opnieuw.")
-		return enterPassword()
 	}
 
 	return date
@@ -68,7 +67,7 @@ func fetchEmployee(db *sql.DB, userName string, password time.Time) structs.Empl
 		employee.SetEmployeeSince(employeeSince)
 	} else {
 		fmt.Println("De door u opgegeven combinatie van gebruikersnaam en wachtwoord is onjuist. Probeer opnieuw.")
-		return Login(db);
+		return Login(db)
 	}
 	result.Close()
 	return employee

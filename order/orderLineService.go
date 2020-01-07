@@ -8,58 +8,91 @@ import (
 	"text/tabwriter"
 	"time"
 	"van-der-binckes/items"
+	itemStruct "van-der-binckes/items/structs"
 	orderStruct "van-der-binckes/order/structs"
 	"van-der-binckes/people"
 	peopleStruct "van-der-binckes/people/structs"
 )
 
+// Retrieves all orders and displays them in the console.
 func ShowOrderCollection(db *sql.DB) {
 	orderCollection := getOrderCollection(db)
 	printOrderCollection(orderCollection)
 }
 
+// Adds a new order, including accessories.
 func AddOrder(employee peopleStruct.Employee, db *sql.DB) {
 	customer := people.AddCustomerToOrder(db)
 	bicycle := items.AddBicycleToOrder(db)
-	//accessoryCollection := make([]itemStruct.Accessory, 0)
-	//accessoryCollection = items.addAccessoryToOrder(db, accessoryCollection)
+	orderAccessoryCollection := make([]orderStruct.OrderAccessory, 0)
+	orderAccessoryCollection = addAccessoryToOrder(db, orderAccessoryCollection)
 
 	fmt.Println("Voor hoeveel dagen wil de klant deze bestelling afnemen?")
 
 	var days int
 	fmt.Scanf("%d", &days)
 
-	totalPrice := bicycle.Price() * float64(days)
-
-
+	totalPrice := calculateTotalPrice(bicycle, orderAccessoryCollection, days)
 	fmt.Println(fmt.Sprintf("De totaalprijs is €%.2f. Is dit akkoord? (ja/nee)", totalPrice))
 
 	var response string
 	fmt.Scanf("%s", &response)
 
 	if response == "ja" {
-		query := "INSERT INTO OrderLine (bicycleId, customerId, employeeId, startDate, days, totalPrice) values (?, ?, ?, NOW(), ?, ?)"
-
-		_, err := db.Query(
-			query,
-			bicycle.BicycleId(),
-			customer.CustomerId(),
-			employee.EmployeeId(),
-			days,
-			totalPrice)
-
-		if err != nil {
-			panic(err)
-		}
+		insertOrder(db, bicycle, customer, employee, days, totalPrice, orderAccessoryCollection)
 
 		fmt.Println("Order succesvol toegevoegd.")
 		return
 	}
 
 	fmt.Println("Order geannuleerd.")
-
 }
 
+//  Inserts a new orderline and instantly retrieves it's id to then insert the orderAccessories
+func insertOrder(
+	db *sql.DB,
+	bicycle itemStruct.Bicycle,
+	customer peopleStruct.Customer,
+	employee peopleStruct.Employee,
+	days int,
+	totalPrice float64,
+	orderAccessoryCollection []orderStruct.OrderAccessory) {
+
+	query := "INSERT INTO OrderLine (bicycleId, customerId, employeeId, startDate, days, totalPrice) values (?, ?, ?, NOW(), ?, ?);"
+	_, err := db.Query(
+		query,
+		bicycle.BicycleId(),
+		customer.CustomerId(),
+		employee.EmployeeId(),
+		days,
+		totalPrice)
+	if err != nil {
+		panic(err)
+	}
+	query = "SELECT orderLineId FROM OrderLine WHERE bicycleId = ? AND customerId = ? AND employeeId = ? ORDER BY orderLineId DESC LIMIT 1"
+	result, err := db.Query(
+		query,
+		bicycle.BicycleId(),
+		customer.CustomerId(),
+		employee.EmployeeId())
+	if err != nil {
+		panic(err)
+	}
+	if result.Next() {
+		var orderLineId int
+		err := result.Scan(&orderLineId)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, orderAccessory := range orderAccessoryCollection {
+			insertOrderAccessory(db, orderAccessory, orderLineId)
+		}
+	}
+	result.Close()
+}
+
+// Retrieves a slice containing all orders.
 func getOrderCollection(db *sql.DB) []orderStruct.OrderLine {
 	query := "SELECT * FROM OrderLine;"
 	result, err := db.Query(query)
@@ -101,6 +134,7 @@ func getOrderCollection(db *sql.DB) []orderStruct.OrderLine {
 	return orderCollection
 }
 
+// Prints all orders using the tabwriter
 func printOrderCollection(orderLines []orderStruct.OrderLine) {
 	writer := new(tabwriter.Writer)
 	writer.Init(os.Stdout, 10, 10, 2, ' ', tabwriter.Debug) //Debug flag for lines
@@ -146,4 +180,20 @@ func printOrderCollection(orderLines []orderStruct.OrderLine) {
 	}
 
 	writer.Flush()
+}
+
+// Calculates the totalprice of the bicycle and accessories multiplied by the amount of days
+func calculateTotalPrice(
+	bycicle itemStruct.Bicycle,
+	orderAccessoryCollection []orderStruct.OrderAccessory,
+	days int) float64 {
+	totalPrice := 0.00
+	totalPrice += bycicle.Price()
+
+	for _, orderAccessory := range orderAccessoryCollection {
+		accessory := orderAccessory.Accessory()
+		totalPrice += accessory.Price()
+	}
+
+	return totalPrice * float64(days)
 }

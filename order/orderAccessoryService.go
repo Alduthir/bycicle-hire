@@ -2,10 +2,12 @@ package order
 
 import (
 	"database/sql"
+	"fmt"
 	"van-der-binckes/items"
 	orderStruct "van-der-binckes/order/structs"
 )
 
+// Gets a slice of all OrderAccessories for a specific orderLine
 func getOrderAccessoryCollection(db *sql.DB, orderLine orderStruct.OrderLine) []orderStruct.OrderAccessory {
 	query := "SELECT accessoryId, amount FROM OrderAccessory WHERE orderLineId = ?;"
 	result, err := db.Query(query, orderLine.OrderLineId())
@@ -15,7 +17,7 @@ func getOrderAccessoryCollection(db *sql.DB, orderLine orderStruct.OrderLine) []
 
 	var (
 		accessoryId int
-		amount  int
+		amount      int
 	)
 
 	orderAccessoryCollection := make([]orderStruct.OrderAccessory, 0)
@@ -37,4 +39,58 @@ func getOrderAccessoryCollection(db *sql.DB, orderLine orderStruct.OrderLine) []
 	return orderAccessoryCollection
 }
 
+// Recursively adds accessories to the order.
+func addAccessoryToOrder(
+	db *sql.DB,
+	orderAccessoryCollection []orderStruct.OrderAccessory) []orderStruct.OrderAccessory {
+	fmt.Println("Wilt u accessoires toevoegen aan de bestelling? (ja/nee)")
 
+	var response string
+	fmt.Scanf("%s", &response)
+
+	if response == "nee" {
+		return orderAccessoryCollection
+	}
+
+	items.PrintAccessoryCollection(db)
+	fmt.Println("Welke accessoire wil de klant huren? (accessoirenummer)")
+
+	var accessoryId int
+	fmt.Scanf("%d", &accessoryId)
+
+	defer func(db *sql.DB, accessoryId int) {
+		r := recover()
+		if r != nil {
+			fmt.Println(fmt.Printf("Geen accessoire met nummer %d gevonden.", accessoryId))
+			orderAccessoryCollection = addAccessoryToOrder(db, orderAccessoryCollection)
+		}
+	}(db, accessoryId)
+
+	accessory := items.GetAccessoryById(db, accessoryId)
+
+	fmt.Println(fmt.Sprintf("Hoeveel accessoires van het type %s wil de klant huren?", accessory.Name()))
+
+	var amount int
+	fmt.Scanf("%d", &amount)
+
+	orderAccessory := orderStruct.NewOrderAccessory(accessory, amount)
+	orderAccessoryCollection = append(orderAccessoryCollection, orderAccessory)
+
+	return addAccessoryToOrder(db, orderAccessoryCollection)
+}
+
+// Inserts a single orderAccessory linked to the given orderLineId
+func insertOrderAccessory(db *sql.DB, orderAccessory orderStruct.OrderAccessory, orderLineId int) {
+	query := "INSERT INTO OrderAccessory (orderLineId, accessoryId, amount) values (?, ?, ?)"
+
+	accessory := orderAccessory.Accessory()
+	_, err := db.Query(
+		query,
+		orderLineId,
+		accessory.AccessoryId(),
+		orderAccessory.Amount())
+
+	if err != nil {
+		panic(err)
+	}
+}

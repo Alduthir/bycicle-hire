@@ -10,6 +10,10 @@ type OrderAccessory struct {
 	amount    int
 }
 
+func NewOrderAccessory(accessory itemStructs.Accessory, amount int) OrderAccessory {
+	return OrderAccessory{accessory: accessory, amount: amount}
+}
+
 func (o *OrderAccessory) Order() OrderLine {
 	return o.order
 }

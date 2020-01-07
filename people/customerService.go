@@ -18,13 +18,13 @@ func ShowCustomerCollection(db *sql.DB) {
 	printCustomerCollection(customerCollection)
 }
 
-func AddCustomerToOrder(db *sql.DB) (customer people.Customer){
+func AddCustomerToOrder(db *sql.DB) (customer people.Customer) {
 	fmt.Println("Voor welke klant wilt u een bestelling toevoegen? (klantnummer)")
 
 	var customerId int
 	fmt.Scanf("%d", &customerId)
 
-	defer func(db *sql.DB, customerId int){
+	defer func(db *sql.DB, customerId int) {
 		r := recover()
 		if r != nil {
 			fmt.Println(fmt.Printf("Geen persoon met klantnummer %d gevonden.", customerId))

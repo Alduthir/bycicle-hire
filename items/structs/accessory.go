@@ -2,8 +2,8 @@ package structs
 
 type Accessory struct {
 	accessoryId int
-	name  string
-	price float64
+	name        string
+	price       float64
 }
 
 func (a *Accessory) AccessoryId() int {

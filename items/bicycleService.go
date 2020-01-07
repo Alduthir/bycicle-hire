@@ -48,7 +48,7 @@ func AddBicycleToOrder(db *sql.DB) (bicycle items.Bicycle) {
 
 	defer func(db *sql.DB, bicycleId int) {
 		r := recover()
-		if r != nil{
+		if r != nil {
 			fmt.Println(fmt.Printf("Geen fiets met nummer %d gevonden.", bicycleId))
 			bicycle = AddBicycleToOrder(db)
 		}

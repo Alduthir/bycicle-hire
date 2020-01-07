@@ -1,4 +1,4 @@
-#Fietsverhuur van der Binckes
+# Fietsverhuur van der Binckes
 Om het beroepsproduct gebruiksklaar te maken:
 1. Plaats de map van-der-binckes in uw GOPATH
 2. go get github.com/gookit/color

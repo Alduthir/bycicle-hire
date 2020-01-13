@@ -146,7 +146,7 @@ func printOrderCollection(orderLines []orderStruct.OrderLine) {
 		customer := orderLine.Customer()
 		customerName := customer.Name() + " " + customer.Surname()
 
-		employee := orderLine.Customer()
+		employee := orderLine.Employee()
 		employeeName := employee.Name() + " " + employee.Surname()
 
 		startDate := orderLine.StartDate()

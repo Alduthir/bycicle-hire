@@ -27,10 +27,7 @@ func AddOrder(employee peopleStruct.Employee, db *sql.DB) {
 	orderAccessoryCollection := make([]orderStruct.OrderAccessory, 0)
 	orderAccessoryCollection = addAccessoryToOrder(db, orderAccessoryCollection)
 
-	fmt.Println("Voor hoeveel dagen wil de klant deze bestelling afnemen?")
-
-	var days int
-	fmt.Scanf("%d", &days)
+	days := addDays()
 
 	totalPrice := calculateTotalPrice(bicycle, orderAccessoryCollection, days)
 	fmt.Println(fmt.Sprintf("De totaalprijs is €%.2f. Is dit akkoord? (ja/nee)", totalPrice))
@@ -46,6 +43,18 @@ func AddOrder(employee peopleStruct.Employee, db *sql.DB) {
 	}
 
 	fmt.Println("Order geannuleerd.")
+}
+
+func addDays() int {
+	fmt.Println("Voor hoeveel dagen wil de klant deze bestelling afnemen?")
+	var days int
+	fmt.Scanf("%d", &days)
+
+	if days == 0 {
+		fmt.Println("Voer alstublieft een getal in.")
+		return addDays()
+	}
+	return days
 }
 
 //  Inserts a new orderline and instantly retrieves it's id to then insert the orderAccessories
@@ -139,7 +148,7 @@ func printOrderCollection(orderLines []orderStruct.OrderLine) {
 	writer := new(tabwriter.Writer)
 	writer.Init(os.Stdout, 10, 10, 2, ' ', tabwriter.Debug) //Debug flag for lines
 
-	fmt.Fprintln(writer, "ordernummer\tklant\tmedewerker\tfiets\taccessoires\tstartdatum\teindDatum\tprijs")
+	fmt.Fprintln(writer, "Ordernummer\tKlant\tMedewerker\tFiets\tAccessoires\tStartdatum\tEindDatum\tPrijs")
 
 	for _, orderLine := range orderLines {
 		// Explicitly retrieve all objects before using their getters because go is stupid and can't read pointers.

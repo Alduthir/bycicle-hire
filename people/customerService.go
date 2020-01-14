@@ -40,44 +40,9 @@ func AddCustomerToOrder(db *sql.DB) (customer people.Customer) {
 func AddCustomer(db *sql.DB) {
 	// Use the bufio reader to read multiple words at once.
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("Hoe heet deze nieuwe klant? Voor & Achternaam invullen.")
-	text, _ := reader.ReadString('\n')
-	text = strings.TrimSuffix(text, "\n")
-
-	nameCollection := strings.Split(text, " ")
-	if len(nameCollection) != 2 {
-		fmt.Println("Uw invoer werdt niet herkend. Voer de naam en achternaam in, gescheiden door één spatie.")
-		return
-	}
-
-	fmt.Println("Wat is de postcode van de nieuwe klant?")
-	text, _ = reader.ReadString('\n')
-	text = strings.TrimSuffix(text, "\n")
-
-	regex := regexp.MustCompile(`^\W$`) // Remove whitespace
-	postalCode := regex.ReplaceAllString(text, "")
-
-	// Matches the input on 4 digits followed by 2 letters.
-	matches, _ := regexp.MatchString(`^\d{4}[a-zA-Z]{2}$`, postalCode)
-
-	if matches == false {
-		fmt.Println("Een postcode moet bestaan uit 4 cijfers en 2 letters")
-		return
-	}
-
-	fmt.Println("En tot slot, wat is het huisnummer van de nieuwe klant?")
-	text, _ = reader.ReadString('\n')
-	text = strings.TrimSuffix(text, "\n")
-
-	regex = regexp.MustCompile(`[^0-9.]`)
-	houseNumber, _ := strconv.Atoi(regex.ReplaceAllString(text, "")) //Remove all non numeric characters
-	regex = regexp.MustCompile(`[^a-zA-Z]`)                          // Remove all numeric characters
-	houseNumberSuffix := sql.NullString{String: regex.ReplaceAllString(text, "")}
-	houseNumberSuffix.Valid = false
-
-	if len(houseNumberSuffix.String) > 0 {
-		houseNumberSuffix.Valid = true
-	}
+	nameCollection := addCustomerName(reader)
+	postalCode := addPostalCode(reader)
+	houseNumber, houseNumberSuffix := addHouseNumber(reader)
 
 	query := "INSERT INTO Customer (name, surname, postalcode, housenumber, houseNumberSuffix) values (?,?,UPPER(?),?,?)"
 
@@ -108,7 +73,7 @@ func AddCustomer(db *sql.DB) {
 		}
 	}
 
-	fmt.Println("Gebruiker sucessvol toegevoegd met klantnummer " + strconv.Itoa(customerId))
+	fmt.Println("Klant sucessvol toegevoegd met klantnummer " + strconv.Itoa(customerId))
 }
 
 func GetCustomerById(db *sql.DB, customerId int) people.Customer {
@@ -139,6 +104,8 @@ func GetCustomerById(db *sql.DB, customerId int) people.Customer {
 		customer.SetPostalCode(postalCode)
 		customer.SetHouseNumber(houseNumber)
 		customer.SetHouseNumberSuffix(houseNumberSuffix)
+	} else {
+		panic("No customer found.")
 	}
 	result.Close()
 	return customer
@@ -188,7 +155,7 @@ func printCustomerCollection(customers []people.Customer) {
 	writer := new(tabwriter.Writer)
 	writer.Init(os.Stdout, 10, 10, 2, ' ', tabwriter.Debug) //Debug flag for lines
 
-	fmt.Fprintln(writer, "klantnummer\tnaam\tpostcode\thuisnummer")
+	fmt.Fprintln(writer, "Klantnummer\tNaam\tPostcode\tHuisnummer")
 
 	for _, customer := range customers {
 		name := customer.Name() + " " + customer.Surname()
@@ -203,4 +170,60 @@ func printCustomerCollection(customers []people.Customer) {
 	}
 
 	writer.Flush()
+}
+
+// Read the input name and try to split it into a collection of 2 strings. If that is not possible calls recursively.
+func addCustomerName(reader *bufio.Reader) []string {
+	fmt.Println("Hoe heet deze nieuwe klant? Voor & Achternaam invullen.")
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimSuffix(text, "\n")
+
+	nameCollection := strings.Split(text, " ")
+	if len(nameCollection) != 2 {
+		fmt.Println("Uw invoer werdt niet herkend. Voer de naam en achternaam in, gescheiden door één spatie.")
+		return addCustomerName(reader)
+	}
+	return nameCollection
+}
+
+// Tries to interprit a postalcode with 4 digits, followed by 2 letters. If not possible, calls recursively.
+func addPostalCode(reader *bufio.Reader) string {
+	fmt.Println("Wat is de postcode van de nieuwe klant?")
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimSuffix(text, "\n")
+
+	regex := regexp.MustCompile(`^\W$`) // Remove whitespace
+	postalCode := regex.ReplaceAllString(text, "")
+
+	// Matches the input on 4 digits followed by 2 letters.
+	matches, _ := regexp.MatchString(`^\d{4}[a-zA-Z]{2}$`, postalCode)
+
+	if matches == false {
+		fmt.Println("Een postcode moet bestaan uit 4 cijfers en 2 letters")
+		return addPostalCode(reader)
+	}
+	return postalCode
+}
+
+// Tries to interprit a numeric housenumber and a 5 character suffix. If not possible, calls recursively.
+func addHouseNumber(reader *bufio.Reader) (int, sql.NullString) {
+	fmt.Println("En tot slot, wat is het huisnummer van de nieuwe klant?")
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimSuffix(text, "\n")
+
+	regex := regexp.MustCompile(`[^0-9.]`)
+	houseNumber, _ := strconv.Atoi(regex.ReplaceAllString(text, "")) //Remove all non numeric characters
+	regex = regexp.MustCompile(`[^a-zA-Z]`)                          // Remove all numeric characters
+	houseNumberSuffix := sql.NullString{String: regex.ReplaceAllString(text, "")}
+	houseNumberSuffix.Valid = false
+
+	if len(houseNumberSuffix.String) > 0 {
+		houseNumberSuffix.Valid = true
+	}
+
+	if houseNumber == 0 || len(houseNumberSuffix.String) > 5 {
+		fmt.Println("Het huisnummer dient een positief getal te zijn en de toevoeging mag maximaal 5 karakters bevatten.")
+		return addHouseNumber(reader)
+	}
+	return houseNumber, houseNumberSuffix
 }

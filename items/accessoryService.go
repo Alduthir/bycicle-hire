@@ -30,6 +30,8 @@ func GetAccessoryById(db *sql.DB, accessoryId int) structs.Accessory {
 		accessory.SetAccessoryId(accessoryId)
 		accessory.SetName(name)
 		accessory.SetPrice(price)
+	} else {
+		panic("no accessory found.")
 	}
 	result.Close()
 	return accessory

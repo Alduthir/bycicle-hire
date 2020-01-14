@@ -34,6 +34,8 @@ func GetBicycleById(db *sql.DB, bicycleId int) items.Bicycle {
 		bicycle.SetBicycleType(bicycleType)
 		bicycle.SetPrice(price)
 		bicycle.SetAmount(amount - getCurrentlyHiredStock(bicycleId, db))
+	} else {
+		panic("no bycicle found.")
 	}
 	result.Close()
 	return bicycle
@@ -55,6 +57,12 @@ func AddBicycleToOrder(db *sql.DB) (bicycle items.Bicycle) {
 	}(db, bicycleId)
 
 	bicycle = GetBicycleById(db, bicycleId)
+
+	if bicycle.Amount() <= 0 {
+		fmt.Println("Deze fiets is momenteel niet op voorraad en kan niet worden verhuurd.")
+		return AddBicycleToOrder(db)
+	}
+
 	return bicycle
 }
 

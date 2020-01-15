@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"van-der-binckes/items"
+	"van-der-binckes/items/structs"
 	orderStruct "van-der-binckes/order/structs"
 )
 
@@ -52,6 +53,20 @@ func addAccessoryToOrder(
 		return orderAccessoryCollection
 	}
 
+	accessory := requestAccessory(db)
+	fmt.Println(fmt.Sprintf("Hoeveel accessoires van het type %s wil de klant huren?", accessory.Name()))
+
+	var amount int
+	fmt.Scanf("%d", &amount)
+
+	orderAccessory := orderStruct.NewOrderAccessory(accessory, amount)
+	orderAccessoryCollection = append(orderAccessoryCollection, orderAccessory)
+
+	return addAccessoryToOrder(db, orderAccessoryCollection)
+}
+
+// Request and retrieve a single accessory by id
+func requestAccessory(db *sql.DB) (accessory structs.Accessory) {
 	items.PrintAccessoryCollection(db)
 	fmt.Println("Welke accessoire wil de klant huren? (accessoirenummer)")
 
@@ -62,21 +77,12 @@ func addAccessoryToOrder(
 		r := recover()
 		if r != nil {
 			fmt.Println(fmt.Printf("Geen accessoire met nummer %d gevonden.", accessoryId))
-			orderAccessoryCollection = addAccessoryToOrder(db, orderAccessoryCollection)
+			accessory = requestAccessory(db)
 		}
 	}(db, accessoryId)
 
-	accessory := items.GetAccessoryById(db, accessoryId)
-
-	fmt.Println(fmt.Sprintf("Hoeveel accessoires van het type %s wil de klant huren?", accessory.Name()))
-
-	var amount int
-	fmt.Scanf("%d", &amount)
-
-	orderAccessory := orderStruct.NewOrderAccessory(accessory, amount)
-	orderAccessoryCollection = append(orderAccessoryCollection, orderAccessory)
-
-	return addAccessoryToOrder(db, orderAccessoryCollection)
+	accessory = items.GetAccessoryById(db, accessoryId)
+	return accessory
 }
 
 // Inserts a single orderAccessory linked to the given orderLineId

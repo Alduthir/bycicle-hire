@@ -201,7 +201,7 @@ func calculateTotalPrice(
 
 	for _, orderAccessory := range orderAccessoryCollection {
 		accessory := orderAccessory.Accessory()
-		totalPrice += accessory.Price()
+		totalPrice += accessory.Price() * float64(orderAccessory.Amount())
 	}
 
 	return totalPrice * float64(days)
